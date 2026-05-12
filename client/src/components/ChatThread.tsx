@@ -2,10 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
-import { Loader2, Send, AlertCircle, Zap } from "lucide-react";
+import { Loader2, Send, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import AIToggleSwitch from "./AIToggleSwitch";
 
 interface ChatThreadProps {
   conversationId: number;
@@ -56,18 +56,18 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
     }
   };
 
-  const handleToggleAI = async () => {
+  const handleToggleAI = async (enabled: boolean) => {
     if (!conversation) return;
 
     try {
       await toggleAI.mutateAsync({
         conversationId,
-        aiEnabled: !conversation.aiEnabled,
+        aiEnabled: enabled,
       });
       getConversation.refetch();
-      toast.success(`AI ${!conversation.aiEnabled ? "enabled" : "disabled"}`);
     } catch (error) {
       toast.error("Failed to toggle AI");
+      throw error;
     }
   };
 
@@ -98,31 +98,20 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
           <p className="text-xs text-slate-500">{conversation.customerPhoneNumber}</p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {conversation.isWaitingForHuman && (
             <div className="flex items-center gap-2 px-3 py-1 bg-red-50 rounded-lg">
               <AlertCircle className="w-4 h-4 text-red-600" />
-              <span className="text-xs font-medium text-red-700">Waiting for You</span>
+              <span className="text-xs font-medium text-red-700">Escalated</span>
             </div>
           )}
 
-          {/* AI Toggle */}
-          <Button
-            onClick={handleToggleAI}
-            variant={conversation.aiEnabled ? "default" : "outline"}
-            size="sm"
-            className={`gap-2 ${
-              conversation.aiEnabled
-                ? "bg-green-600 hover:bg-green-700"
-                : "border-slate-300"
-            }`}
-            disabled={toggleAI.isPending}
-          >
-            <Zap className="w-4 h-4" />
-            <span className="hidden sm:inline">
-              AI {conversation.aiEnabled ? "ON" : "OFF"}
-            </span>
-          </Button>
+          {/* AI Toggle Switch */}
+          <AIToggleSwitch
+            isEnabled={conversation.aiEnabled}
+            isLoading={toggleAI.isPending}
+            onToggle={handleToggleAI}
+          />
         </div>
       </div>
 
@@ -145,8 +134,8 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
                   message.senderType === "customer"
                     ? "bg-slate-100 text-slate-900"
                     : message.senderType === "ai"
-                      ? "bg-blue-100 text-blue-900"
-                      : "bg-green-100 text-green-900"
+                      ? "bg-green-100 text-green-900"
+                      : "bg-blue-600 text-white"
                 }`}
               >
                 <p className="text-sm">{message.content}</p>
@@ -190,15 +179,15 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
             </Button>
           </div>
           <p className="text-xs text-slate-500 mt-2">
-            AI is disabled. You can reply manually to this customer.
+            AI is disabled. You can reply manually to this customer. Enable AI to activate auto-responses.
           </p>
         </div>
       )}
 
       {conversation.aiEnabled && (
-        <div className="border-t border-slate-200 p-4 bg-blue-50">
-          <p className="text-xs text-blue-700">
-            ✓ AI is enabled and will automatically reply to customer messages
+        <div className="border-t border-slate-200 p-4 bg-green-50">
+          <p className="text-xs text-green-700">
+            ✓ AI is active and will automatically respond to customer messages. Reply with AGENT to escalate.
           </p>
         </div>
       )}

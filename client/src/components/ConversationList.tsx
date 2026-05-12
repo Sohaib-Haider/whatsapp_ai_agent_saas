@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { Loader2, MessageCircle } from "lucide-react";
+import { Loader2, MessageCircle, AlertCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 interface ConversationListProps {
@@ -56,47 +56,71 @@ export default function ConversationList({
   }
 
   return (
-    <div className="divide-y divide-slate-200">
+    <div className="divide-y divide-slate-200 h-full overflow-y-auto">
       {filtered.map((conversation) => (
         <button
           key={conversation.id}
           onClick={() => onSelectConversation(conversation.id)}
-          className={`w-full p-4 text-left transition-colors hover:bg-slate-50 ${
-            selectedConversationId === conversation.id ? "bg-green-50" : ""
+          className={`w-full p-4 text-left transition-all hover:bg-slate-50 border-l-4 ${
+            selectedConversationId === conversation.id
+              ? "bg-green-50 border-l-green-600"
+              : "border-l-transparent hover:border-l-slate-300"
           }`}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start justify-between gap-3 mb-2">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <h3 className="font-medium text-slate-900 truncate">
+                <h3 className="font-semibold text-slate-900 truncate">
                   {conversation.customerName || conversation.customerPhoneNumber}
                 </h3>
                 {conversation.unreadCount > 0 && (
-                  <span className="bg-green-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0">
+                  <span className="bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0">
                     {conversation.unreadCount}
                   </span>
                 )}
               </div>
-              <p className="text-sm text-slate-500 truncate mt-1">
+              <p className="text-xs text-slate-500 truncate mt-0.5">
                 {conversation.customerPhoneNumber}
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {!conversation.aiEnabled && (
-                <div className="w-2 h-2 bg-amber-500 rounded-full" title="AI disabled" />
+                <div
+                  className="w-2.5 h-2.5 bg-amber-500 rounded-full"
+                  title="AI disabled"
+                />
               )}
               {conversation.isWaitingForHuman && (
-                <div className="w-2 h-2 bg-red-500 rounded-full" title="Waiting for human" />
+                <div
+                  className="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"
+                  title="Waiting for human"
+                />
               )}
             </div>
           </div>
 
-          {conversation.lastMessageAt && (
-            <p className="text-xs text-slate-400 mt-2">
-              {formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })}
+          {/* Last message preview */}
+          <div className="mb-2">
+            <p className="text-sm text-slate-600 truncate line-clamp-1">
+              Last message preview
             </p>
-          )}
+          </div>
+
+          {/* Timestamp and status */}
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-slate-400">
+              {conversation.lastMessageAt
+                ? formatDistanceToNow(new Date(conversation.lastMessageAt), { addSuffix: true })
+                : "No activity"}
+            </p>
+            {conversation.isWaitingForHuman && (
+              <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
+                <AlertCircle className="w-3 h-3" />
+                <span>Needs attention</span>
+              </div>
+            )}
+          </div>
         </button>
       ))}
     </div>
