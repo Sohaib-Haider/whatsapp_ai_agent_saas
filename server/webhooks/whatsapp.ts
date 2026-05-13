@@ -286,7 +286,7 @@ export async function sendWhatsAppMessage(
     // Use Meta Graph API v18.0 endpoint for WhatsApp
     // Note: The correct endpoint is graph.instagram.com for WhatsApp Business API
     // Construct the WhatsApp API endpoint
-    const url = `https://graph.instagram.com/v18.0/${business.phoneNumberId}/messages`;
+    const url = `https://graph.facebook.com/v18.0/${business.phoneNumberId}/messages`;
 
     const payload = {
       messaging_product: "whatsapp",
