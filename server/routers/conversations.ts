@@ -160,13 +160,25 @@ export const conversationsRouter = router({
           senderType: "business",
           content: input.content,
         });
-
+        
+        // ✅ Actually send via WhatsApp API
+        const { sendWhatsAppMessage } = await import("../webhooks/whatsapp");
+        const waMessageId = await sendWhatsAppMessage(
+          business,
+          conversation.customerPhoneNumber,
+          input.content
+        );
+        
+        if (!waMessageId) {
+          console.error("[Conversations] Failed to send WhatsApp message");
+        }
+        
         // Update conversation last message time
         await db.updateConversation(input.conversationId, {
           lastMessageAt: new Date(),
           isWaitingForHuman: false,
         });
-
+        
         return {
           success: true,
           messageId: message.id,
