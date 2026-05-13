@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, businessName, phoneNumberId, verifyToken FROM businesses LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway06.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2zZf3eyZH8VsQaA.root --database SBWh39koHt6hGyegbxodLU --execute SELECT id, businessName, phoneNumberId, verifyToken FROM businesses LIMIT 5;",
+  "rows": [
+    {
+      "id": "1",
+      "businessName": "IntelliVision",
+      "phoneNumberId": "1059312260602335",
+      "verifyToken": "Abdullahknows01"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tbusinessName\tphoneNumberId\tverifyToken\n1\tIntelliVision\t1059312260602335\tAbdullahknows01\n",
+  "stderr": "",
+  "execution_time_ms": 285
+}

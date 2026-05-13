@@ -1,5 +1,7 @@
 import type { Request, Response } from "express";
 import * as db from "../db";
+import { businesses } from "../../drizzle/schema";
+import { eq } from "drizzle-orm";
 import { processMessage } from "../ai/agent";
 
 /**
@@ -12,10 +14,15 @@ import { processMessage } from "../ai/agent";
  * Verify webhook endpoint (Meta's challenge-response verification)
  */
 export async function verifyWebhook(req: Request, res: Response) {
+  console.log("[WhatsApp Webhook] verifyWebhook called");
+  console.log("[WhatsApp Webhook] Full query:", req.query);
+  console.log("[WhatsApp Webhook] Full URL:", req.url);
+  
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
   const challenge = req.query["hub.challenge"];
-  const phoneNumberId = req.query["phone_number_id"] as string;
+
+  console.log("[WhatsApp Webhook] Parsed - mode:", mode, "token:", token, "challenge:", challenge);
 
   // Validate webhook verification
   if (mode !== "subscribe") {
@@ -24,30 +31,42 @@ export async function verifyWebhook(req: Request, res: Response) {
     return;
   }
 
-  if (!token) {
-    console.warn("[WhatsApp Webhook] No verify token provided");
+  if (!token || !challenge) {
+    console.warn("[WhatsApp Webhook] Missing verify token or challenge");
+    console.warn("[WhatsApp Webhook] Token:", token, "Challenge:", challenge);
     res.sendStatus(403);
     return;
   }
 
   // Find business and verify token matches
   try {
-    let business = null;
-
-    // If phone number ID is provided, use it to find business
-    if (phoneNumberId) {
-      business = await findBusinessByPhoneNumberId(phoneNumberId);
+    console.log("[WhatsApp Webhook] Looking for business with token:", token);
+    const database = await db.getDb();
+    if (!database) {
+      console.error("[WhatsApp Webhook] Database not available");
+      res.sendStatus(503);
+      return;
     }
 
-    // Verify token matches business verify token
-    if (business && business.verifyToken === token) {
-      console.log("[WhatsApp Webhook] Verification successful for business:", business.id);
+    // Query all businesses to find one with matching verify token
+    const allBusinesses = await database.select().from(businesses);
+    console.log("[WhatsApp Webhook] Found", allBusinesses.length, "businesses in database");
+    
+    allBusinesses.forEach((b: any) => {
+      console.log("[WhatsApp Webhook] Business:", b.businessName, "Token:", b.verifyToken);
+    });
+
+    const business = allBusinesses.find((b: any) => b.verifyToken === token);
+
+    if (business) {
+      console.log("[WhatsApp Webhook] Verification successful for business:", business.businessName);
       res.status(200).send(challenge);
       return;
     }
 
-    // If no business found or token mismatch, reject
+    // Token mismatch or no business found
     console.warn("[WhatsApp Webhook] Verification failed: token mismatch or business not found");
+    console.warn("[WhatsApp Webhook] Looking for token:", token);
     res.sendStatus(403);
   } catch (error) {
     console.error("[WhatsApp Webhook] Verification error:", error);
