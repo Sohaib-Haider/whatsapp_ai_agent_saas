@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Send, AlertCircle } from "lucide-react";
+import { Loader2, Send, AlertCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import AIToggleSwitch from "./AIToggleSwitch";
+import ClearChatDialog from "./ClearChatDialog";
 
 interface ChatThreadProps {
   conversationId: number;
@@ -15,6 +16,7 @@ interface ChatThreadProps {
 export default function ChatThread({ conversationId, businessId }: ChatThreadProps) {
   const [messageInput, setMessageInput] = useState("");
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getConversation = trpc.conversations.getConversation.useQuery({
@@ -24,6 +26,7 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
   const sendMessage = trpc.conversations.sendMessage.useMutation();
   const toggleAI = trpc.conversations.toggleAI.useMutation();
   const markAsRead = trpc.conversations.markAsRead.useMutation();
+  const clearChat = trpc.conversations.clearChat.useMutation();
 
   const conversation = getConversation.data;
   const messages = conversation?.messages || [];
@@ -71,6 +74,21 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
     }
   };
 
+  const handleClearChat = async () => {
+    if (!conversation) return;
+
+    try {
+      await clearChat.mutateAsync({
+        conversationId,
+      });
+      setIsClearDialogOpen(false);
+      getConversation.refetch();
+      toast.success("Chat cleared successfully");
+    } catch (error) {
+      toast.error("Failed to clear chat");
+    }
+  };
+
   if (getConversation.isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -111,6 +129,30 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
             isEnabled={conversation.aiEnabled}
             isLoading={toggleAI.isPending}
             onToggle={handleToggleAI}
+          />
+
+          {/* Clear Chat Button */}
+          <Button
+            onClick={() => setIsClearDialogOpen(true)}
+            disabled={clearChat.isPending || messages.length === 0}
+            variant="ghost"
+            size="icon"
+            title="Clear all messages"
+            className="text-slate-500 hover:text-red-600 hover:bg-red-50"
+          >
+            {clearChat.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Trash2 className="w-4 h-4" />
+            )}
+          </Button>
+
+          {/* Clear Chat Dialog */}
+          <ClearChatDialog
+            isOpen={isClearDialogOpen}
+            isLoading={clearChat.isPending}
+            onConfirm={handleClearChat}
+            onCancel={() => setIsClearDialogOpen(false)}
           />
         </div>
       </div>

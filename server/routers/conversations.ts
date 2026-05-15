@@ -237,6 +237,47 @@ export const conversationsRouter = router({
     }),
 
   /**
+   * Clear all messages from a conversation (like WhatsApp clear chat).
+   */
+  clearChat: protectedProcedure
+    .input(z.object({ conversationId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const conversation = await db.getConversationById(input.conversationId);
+        if (!conversation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Conversation not found",
+          });
+        }
+
+        // Verify business ownership
+        const business = await db.getBusinessById(conversation.businessId);
+        if (!business || business.userId !== ctx.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "You do not have access to this conversation",
+          });
+        }
+
+        // Delete all messages in conversation
+        await db.deleteMessagesByConversationId(input.conversationId);
+
+        return {
+          success: true,
+          message: "Chat cleared successfully",
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) throw error;
+        console.error("[Conversations] Error clearing chat:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to clear chat",
+        });
+      }
+    }),
+
+  /**
    * Get escalated conversations waiting for human response.
    */
   getEscalatedConversations: protectedProcedure

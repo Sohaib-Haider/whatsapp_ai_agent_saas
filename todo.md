@@ -117,3 +117,11 @@
 - [x] Set up monitoring and logging
 - [x] Create user documentation
 - [x] Prepare for launch
+
+## Phase 14: Additional Features - Clear Chat
+- [x] Add clearConversationMessages backend procedure
+- [x] Create delete confirmation dialog component
+- [x] Add delete button to ChatThread header
+- [x] Implement clear chat mutation in frontend
+- [x] Test clear chat feature end-to-end
+- [x] Verify messages are deleted from database

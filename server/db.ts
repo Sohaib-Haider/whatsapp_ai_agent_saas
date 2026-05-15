@@ -285,3 +285,10 @@ export async function resolveEscalation(id: number): Promise<void> {
 
   await db.update(escalations).set({ resolvedAt: new Date() }).where(eq(escalations.id, id));
 }
+
+export async function deleteMessagesByConversationId(conversationId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.delete(messages).where(eq(messages.conversationId, conversationId));
+}

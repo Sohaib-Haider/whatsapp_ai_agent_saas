@@ -159,7 +159,7 @@ describe("WhatsApp API - Message Sending", () => {
     const result = await sendWhatsAppMessage(business, "+1234567890", "Test message");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "https://graph.instagram.com/v18.0/123456789/messages",
+      "https://graph.facebook.com/v18.0/123456789/messages",
       expect.objectContaining({
         method: "POST",
         headers: {
