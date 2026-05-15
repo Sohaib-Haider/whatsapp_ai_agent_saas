@@ -11,22 +11,23 @@ import ClearChatDialog from "./ClearChatDialog";
 interface ChatThreadProps {
   conversationId: number;
   businessId: number;
+  onChatCleared?: () => void;
 }
 
-export default function ChatThread({ conversationId, businessId }: ChatThreadProps) {
+export default function ChatThread({ conversationId, businessId, onChatCleared }: ChatThreadProps) {
   const [messageInput, setMessageInput] = useState("");
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const utils = trpc.useUtils();
 
   const getConversation = trpc.conversations.getConversation.useQuery({
     conversationId,
   });
-
+  const clearChat = trpc.conversations.clearChat.useMutation();
   const sendMessage = trpc.conversations.sendMessage.useMutation();
   const toggleAI = trpc.conversations.toggleAI.useMutation();
   const markAsRead = trpc.conversations.markAsRead.useMutation();
-  const clearChat = trpc.conversations.clearChat.useMutation();
 
   const conversation = getConversation.data;
   const messages = conversation?.messages || [];
@@ -82,6 +83,11 @@ export default function ChatThread({ conversationId, businessId }: ChatThreadPro
         conversationId,
       });
       setIsClearDialogOpen(false);
+      
+      // Invalidate analytics to refresh stats
+      await utils.analytics.getSummary.invalidate({ businessId });
+      await utils.conversations.getConversations.invalidate({ businessId });
+      
       getConversation.refetch();
       toast.success("Chat cleared successfully");
     } catch (error) {

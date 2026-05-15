@@ -8,6 +8,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import Login from "./pages/Login";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import ScrollToTop from "./components/ScrollToTop";
 
 function Router() {
   const { isAuthenticated, loading } = useAuth();
@@ -56,6 +57,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <ScrollToTop />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
